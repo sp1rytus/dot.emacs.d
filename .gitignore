@@ -1,0 +1,6 @@
+auto-save-list/
+elpa/*
+url/*
+session.*
+ac-comphist.dat
+tramp

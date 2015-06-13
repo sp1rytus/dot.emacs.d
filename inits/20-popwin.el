@@ -8,5 +8,5 @@
 (global-set-key (kbd "C-x p") popwin:keymap)
 
 ;; ポップアップ表示設定
-(push '("*Occur*") popwin:special-display-config)
-(push '(dired-mode :position top) popwin:special-display-config)
+;; (push '("*Occur*") popwin:special-display-config)
+;; (push '(dired-mode :position top) popwin:special-display-config)

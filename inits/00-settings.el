@@ -16,6 +16,10 @@
 (setq eol-mnemonic-mac  "(CR)")
 (setq eol-mnemonic-unix "(LF)")
 
+;; TAB
+(setq-default tab-width 4)
+(setq-default indent-tabs-mode nil)
+
 ;; ミニバッファ:単語単位での削除操作
 (define-key minibuffer-local-completion-map "\C-w" 'backward-kill-word)
 

@@ -17,7 +17,7 @@
 (setq eol-mnemonic-unix "(LF)")
 
 ;; TAB
-(setq-default tab-width 4)
+(setq-default tab-width 2)
 (setq-default indent-tabs-mode nil)
 
 ;; ミニバッファ:単語単位での削除操作

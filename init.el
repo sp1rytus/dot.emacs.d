@@ -38,6 +38,7 @@
     ssh-config-mode
     yaml-mode
     web-mode
+    coffee-mode
     ;; 30
     flyspell
     flycheck

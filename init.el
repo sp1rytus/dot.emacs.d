@@ -18,6 +18,7 @@
   '(
     init-loader
     ;; 10
+    folding
     auto-complete
     auto-highlight-symbol
     color-theme

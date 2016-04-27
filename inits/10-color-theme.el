@@ -25,6 +25,7 @@
 
      (font-lock-builtin-face ((t (:foreground "LightSteelBlue"))))
      (font-lock-constant-face ((t (:foreground "Aquamarine"))))
+     (font-lock-doc-face ((t (:foreground "OrangeRed"))))
      (font-lock-doc-string-face ((t (:foreground "LightSalmon"))))
      (font-lock-function-name-face ((t (:foreground "LightSkyBlue"))))
      (font-lock-keyword-face ((t (:foreground "Cyan"))))

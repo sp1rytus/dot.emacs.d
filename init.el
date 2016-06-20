@@ -33,7 +33,7 @@
     php-mode
     popwin
     rainbow-mode
-    scala-mode2
+    scala-mode
     scss-mode
     smarty-mode
     ssh-config-mode

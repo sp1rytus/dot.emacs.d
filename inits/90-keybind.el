@@ -1,5 +1,5 @@
 ;; キーバインド
-(global-set-key [f5]  'sbt-command)
+(global-set-key [f1]  'mgit-status)
 (global-set-key [f7]  'enlarge-window-horizontally)
 (global-set-key [f8]  'enlarge-window)
 (global-set-key [f9]  'flyspell-mode)

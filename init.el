@@ -35,6 +35,7 @@
     rainbow-mode
     scala-mode
     scss-mode
+    swift-mode
     smarty-mode
     ssh-config-mode
     yaml-mode

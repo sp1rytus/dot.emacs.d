@@ -1,14 +1,8 @@
-;; ~/.emacs.d/site-lisp 以下全部読み込み
-(let ((default-directory (expand-file-name "~/.emacs.d/site-lisp")))
-  (add-to-list 'load-path default-directory)
-  (if (fboundp 'normal-top-level-add-subdirs-to-load-path)
-      (normal-top-level-add-subdirs-to-load-path)))
-
 ;; パッケージのインストーラーの設定
 (require 'package)
-(add-to-list 'package-archives '("melpa"        . "http://melpa.org/packages/")        t)
-(add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/") t)
-(add-to-list 'package-archives  '("marmalade" . "http://marmalade-repo.org/packages/") t)
+(add-to-list 'package-archives '("melpa"        . "http://melpa.org/packages/")          t)
+(add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/")   t)
+(add-to-list 'package-archives '("marmalade"    . "http://marmalade-repo.org/packages/") t)
 (package-initialize)
 
 ;; common-lisp 系の関数設定

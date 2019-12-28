@@ -37,6 +37,7 @@
     ;; web-mode
     ;; coffee-mode
     ;;-- 30
+    company
     ;; flyspell
     ;; flycheck
     ;; flycheck-pos-tip

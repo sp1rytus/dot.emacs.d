@@ -29,18 +29,18 @@
     ;; google-c-style
     ;; jade-mode
     ;; js2-mode
-    json-mode
+    ;; json-mode
     ;; markdown-mode
     ;; php-mode
     ;; popwin
     ;; rainbow-mode
-    scss-mode
-    scala-mode
+    ;; scss-mode
+    ;; scala-mode
     ;; swift-mode
     ;; smarty-mode
     ;; ssh-config-mode
     ;; yaml-mode
-    web-mode
+    ;; web-mode
     ;; coffee-mode
     ;;-- 30
     ;; flyspell
@@ -81,9 +81,6 @@
  '(markdown-command "mdown")
  '(menu-bar-mode nil)
  '(package-selected-packages (quote (auto-install)))
- ;; '(package-selected-packages
- ;;   (quote
- ;;    (web-beautify magit sbt-mode ensime google-translate flycheck-pos-tip flycheck coffee-mode web-mode yaml-mode ssh-config-mode smarty-mode scss-mode scala-mode rainbow-mode popwin php-mode markdown-mode json-mode js2-mode jade-mode google-c-style apache-mode foreign-regexp color-theme auto-highlight-symbol auto-complete folding init-loader)))
  '(tool-bar-mode nil)
  '(transient-mark-mode t)
  '(vc-handled-backends nil))

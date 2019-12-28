@@ -19,6 +19,8 @@
     ;; color-theme
     ;; foreign-regexp
     ;; --20
+    scss-mode
+    scala-mode
     ;; apache-mode
     ;; google-c-style
     ;; jade-mode
@@ -28,8 +30,6 @@
     ;; php-mode
     ;; popwin
     ;; rainbow-mode
-    ;; scss-mode
-    ;; scala-mode
     ;; swift-mode
     ;; smarty-mode
     ;; ssh-config-mode
@@ -68,11 +68,6 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(display-time-mode t)
- '(flycheck-display-errors-function (function flycheck-pos-tip-error-messages))
- '(google-translate-default-source-language "en")
- '(google-translate-default-target-language "ja")
- '(js-indent-level 2)
- '(markdown-command "mdown")
  '(menu-bar-mode nil)
  '(package-selected-packages (quote (auto-install)))
  '(tool-bar-mode nil)

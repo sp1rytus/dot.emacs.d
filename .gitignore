@@ -1,7 +1,9 @@
-auto-save-list/
-elpa/*
-url/*
+auto-save-list
+elpa
+url
+transient
 session.*
 ac-comphist.dat
+network-security.data
 tramp
 backup

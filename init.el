@@ -19,6 +19,7 @@
     ;; color-theme
     ;; foreign-regexp
     ;; --20
+    bazel-mode
     scss-mode
     scala-mode
     ;; apache-mode

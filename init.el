@@ -22,6 +22,7 @@
     bazel-mode
     scss-mode
     scala-mode
+    typescript-mode
     web-mode
     ;; apache-mode
     ;; google-c-style

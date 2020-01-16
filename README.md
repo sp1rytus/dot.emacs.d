@@ -13,4 +13,5 @@
     $ ln -s dot.emacs.d ~/.emacs.d
 
 シェルの設定: エイリアスを貼っておく
+
     alias emacs='/Applications/Emacs.app/Contents/MacOS/Emacs -nw'

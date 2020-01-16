@@ -11,3 +11,6 @@
 
     $ git clone git@github.com:sp1rytus/dot.emacs.d.git
     $ ln -s dot.emacs.d ~/.emacs.d
+
+シェルの設定: エイリアスを貼っておく
+    alias emacs='/Applications/Emacs.app/Contents/MacOS/Emacs -nw'

@@ -2,7 +2,7 @@
 ---------
 
 * https://emacsformacosx.com/ 
-  * 最新のEmacs24をダウンロードしてください
+  * 最新のEmacsをダウンロードしてください
 * 初回起動時に必要なパッケージが自動的にダウンロードされます
   * init-loader.el と package.el を利用しています
 

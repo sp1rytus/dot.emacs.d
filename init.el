@@ -22,15 +22,18 @@
     bazel-mode
     scss-mode
     scala-mode
+    terraform-mode
     typescript-mode
     web-mode
     ;; apache-mode
     ;; google-c-style
     ;; jade-mode
-    ;; js2-mode
-    ;; json-mode
+    js2-mode
+    json-mode
     ;; markdown-mode
-    ;; php-mode
+    php-mode
+    ruby-mode
+    slim-mode
     ;; popwin
     ;; rainbow-mode
     ;; swift-mode

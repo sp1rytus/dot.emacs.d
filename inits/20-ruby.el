@@ -4,4 +4,5 @@
 (add-hook 'ruby-mode-hook
   (lambda ()
     (setq ruby-indent-level 2)
+    (setq ruby-insert-encoding-magic-comment nil)
   ))

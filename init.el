@@ -30,6 +30,7 @@
     ;; jade-mode
     js2-mode
     json-mode
+    protobuf-mode
     ;; markdown-mode
     php-mode
     ruby-mode
@@ -76,7 +77,7 @@
  ;; If there is more than one, they won't work right.
  '(display-time-mode t)
  '(menu-bar-mode nil)
- '(package-selected-packages (quote (auto-install)))
+ '(package-selected-packages '(auto-install))
  '(tool-bar-mode nil)
  '(transient-mark-mode t)
  '(vc-handled-backends nil))

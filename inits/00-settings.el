@@ -16,6 +16,9 @@
 (setq eol-mnemonic-mac  "(CR)")
 (setq eol-mnemonic-unix "(LF)")
 
+;;複数ウィンドウを開かないようにする
+(setq ns-pop-up-frames nil)
+
 ;; TAB
 (setq-default tab-width 2)
 (setq-default indent-tabs-mode nil)

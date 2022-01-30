@@ -40,6 +40,21 @@
 ;; シンタックスハイライトをグローバルで有効化
 (leaf font-core :config (global-font-lock-mode 1))
 
+(leaf *global-set-key
+  :leaf-autoload nil
+  :bind
+  ("<tab>" . indent-for-tab-command)
+
+  ("C-x <RET> u" . revert-buffer-with-coding-system-utf-8-unix)
+  ("C-x <RET> s" . revert-buffer-with-coding-system-japanese-cp932-dos)
+
+  )
+
+(leaf dired
+  :custom
+  (dired-isearch-filenames . t)
+  (dired-listing-switches  . "-al --group-directories-first"))
+
 ;;; 独立した関数定義
 (leaf cus-edit
   :doc "tools for customizing Emacs and Lisp packages"
@@ -55,9 +70,9 @@
     (redraw-frame))
 
   :bind (("M-ESC ESC" . c/redraw-frame))
-  :custom '((user-full-name . "Naoya Yamashita")
-            (user-mail-address . "conao3@gmail.com")
-            (user-login-name . "conao3")
+  :custom '((user-full-name . "Yoshinobu Kinugasa")
+            (user-mail-address . "yoshinobu.kinugasa@ixias.net")
+            (user-login-name . "sp1rytus")
             (create-lockfiles . nil)
             (debug-on-error . t)
             (init-file-debug . t)
@@ -98,21 +113,82 @@
            (eval-expression-print-level . nil)))
 
 (leaf files
-  :custom
-  ;; バックアップ先をカレントディレクトリから変更
-  (backup-directory-alist . `(("" . ,(concat user-emacs-directory "file-backup/"))))
-  ;; 自動保存(クラッシュ時の対応)先をカレントディレクトリから変更
-  (auto-save-file-name-transforms . `((".*" ,temporary-file-directory t)))
-  ;; askだと件数を超えた自動削除時時に一々聞いてくるのでtに変更
-  (delete-old-versions . t)
-  ;; backupに新しいものをいくつ残すか
-  (kept-new-versions . 10)
-  ;; backupに古いものをいくつ残すか
-  (kept-old-versions . 0)
-  ;; バックアップファイル %backup%~ を作成しない。
-  (make-backup-files . nil)
-  ;; 複数バックアップ
-  (version-control . t))
+  :doc "file input and output commands for Emacs"
+  :tag "builtin"
+  :custom `((auto-save-timeout . 15)
+            (auto-save-interval . 60)
+            (auto-save-file-name-transforms . '((".*" ,(locate-user-emacs-file "backup/") t)))
+            (backup-directory-alist . '((".*" . ,(locate-user-emacs-file "backup"))
+                                        (,tramp-file-name-regexp . nil)))
+            (version-control . t)
+            (delete-old-versions . t)))
+
+(leaf startup
+  :doc "process Emacs shell arguments"
+  :tag "builtin" "internal"
+  :custom `((auto-save-list-file-prefix . ,(locate-user-emacs-file "backup/.saves-"))))
+
+(leaf ivy
+  :doc "Incremental Vertical completYon"
+  :req "emacs-24.5"
+  :tag "matching" "emacs>=24.5"
+  :url "https://github.com/abo-abo/swiper"
+  :emacs>= 24.5
+  :ensure t
+  :blackout t
+  :leaf-defer nil
+  :custom ((ivy-initial-inputs-alist . nil)
+           (ivy-use-selectable-prompt . t)
+           )
+  :global-minor-mode t
+  :config
+  (leaf swiper
+    :doc "Isearch with an overview. Oh, man!"
+    :req "emacs-24.5" "ivy-0.13.0"
+    :tag "matching" "emacs>=24.5"
+    :url "https://github.com/abo-abo/swiper"
+    :emacs>= 24.5
+    :ensure t
+    :bind (("C-s" . swiper))
+    (ivy-minibuffer-map
+     ("C-w" . backward-kill-word)
+     ))
+
+  (leaf counsel
+    :doc "Various completion functions using Ivy"
+    :req "emacs-24.5" "swiper-0.13.0"
+    :tag "tools" "matching" "convenience" "emacs>=24.5"
+    :url "https://github.com/abo-abo/swiper"
+    :emacs>= 24.5
+    :ensure t
+    :blackout t
+    :bind (("C-S-s" . counsel-imenu)
+           ("C-x C-r" . counsel-recentf))
+    :custom `((counsel-yank-pop-separator . "\n----------\n")
+              (counsel-find-file-ignore-regexp . ,(rx-to-string '(or "./" "../") 'no-group)))
+    :global-minor-mode t))
+
+(leaf prescient
+  :doc "Better sorting and filtering"
+  :req "emacs-25.1"
+  :tag "extensions" "emacs>=25.1"
+  :url "https://github.com/raxod502/prescient.el"
+  :emacs>= 25.1
+  :ensure t
+  :custom ((prescient-aggressive-file-save . t))
+  :global-minor-mode prescient-persist-mode)
+  
+(leaf ivy-prescient
+  :doc "prescient.el + Ivy"
+  :req "emacs-25.1" "prescient-4.0" "ivy-0.11.0"
+  :tag "extensions" "emacs>=25.1"
+  :url "https://github.com/raxod502/prescient.el"
+  :emacs>= 25.1
+  :ensure t
+  :after prescient ivy
+  :custom ((ivy-prescient-retain-classic-highlighting . t))
+  :global-minor-mode t)
+
 
 (provide 'init)
 ;;; init.el ends here

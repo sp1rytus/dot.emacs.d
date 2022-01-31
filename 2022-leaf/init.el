@@ -125,18 +125,25 @@
 ;;--------------------------------------------------------------------------
 ;; Key Bindings
 ;;--------------------------------------------------------------------------
-(leaf basic-key-bindings
-  :init
-  (global-unset-key (kbd "C-q"))
-  (global-unset-key (kbd "C-x DEL"))
-  (leaf basic-key-bindings-bind
-    :init
-    (defun switch-to-used-buffer ()
-      (interactive)
-      (switch-to-buffer nil))
-    :bind (("<tab>" . indent-for-tab-command)
-           ("C-x <RET> u" . revert-buffer-with-coding-system-utf-8-unix)
-           ("C-x <RET> s" . revert-buffer-with-coding-system-japanese-cp932-dos))))
+(leaf *global-set-key
+  :leaf-autoload nil
+  :bind
+  ("<tab>"    . indent-for-tab-command)
+  ("<f11>"    . ibuffer)
+  ("<f12>"    . undo)
+  ("M-z"      . lsp)
+  
+  ("<help> c" . helpful-command)
+  ("<help> w" . helm-man-woman)
+
+  ("C-x <RET> u" . revert-buffer-with-coding-system-utf-8-unix)
+  ("C-x <RET> s" . revert-buffer-with-coding-system-japanese-cp932-dos))
+
+(leaf minibuffer
+  :bind ((minibuffer-local-completion-map
+          ("C-w" . backward-kill-word)
+          )))
+
 
 ;;--------------------------------------------------------------------------
 ;; Common Behavior

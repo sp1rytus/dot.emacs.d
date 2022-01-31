@@ -86,11 +86,6 @@
   (defalias 'yes-or-no-p 'y-or-n-p)
   (keyboard-translate ?\C-h ?\C-?))
 
-(leaf dired
-  :custom
-  (dired-isearch-filenames . t)
-  (dired-listing-switches  . "-al --group-directories-first"))
-
 ;;--------------------------------------------------------------------------
 ;; Color Themes
 ;;--------------------------------------------------------------------------
@@ -129,6 +124,8 @@
   :leaf-autoload nil
   :bind
   ("<tab>"    . indent-for-tab-command)
+  ("<f7>"     . enlarge-window-horizontally)
+  ("<f8>"     . enlarge-window)
   ("<f11>"    . ibuffer)
   ("<f12>"    . undo)
   ("M-z"      . lsp)
@@ -139,15 +136,151 @@
   ("C-x <RET> u" . revert-buffer-with-coding-system-utf-8-unix)
   ("C-x <RET> s" . revert-buffer-with-coding-system-japanese-cp932-dos))
 
-(leaf minibuffer
-  :bind ((minibuffer-local-completion-map
-          ("C-w" . backward-kill-word)
-          )))
-
-
 ;;--------------------------------------------------------------------------
 ;; Common Behavior
 ;;--------------------------------------------------------------------------
+(leaf dired
+  :custom
+  (dired-isearch-filenames . t)
+  (dired-listing-switches  . "-al --group-directories-first"))
+
+(leaf minibuffer
+  :bind
+  ((minibuffer-local-completion-map
+    ("C-w" . backward-kill-word)
+    )))
+
+;;--------------------------------------------------------------------------
+;; IDE Enviroment
+;;--------------------------------------------------------------------------
+(leaf lsp-mode
+  :ensure t
+  :after  t
+  :defun  lsp-enable-which-key-integration
+  :defvar lsp-command-map lsp-signature-mode-map
+  :custom
+  (lsp-auto-guess-root              . nil)
+  (lsp-enable-snippet               . nil)
+  (lsp-keymap-prefix                . "M-z")
+  (lsp-lens-mode                    . t)
+  (lsp-prefer-flymake               . nil)
+  (lsp-headerline-breadcrumb-enable . nil)
+  (read-process-output-max          . 1048576)
+  (lsp-completion-provider          . :capf)
+  :bind (:lsp-mode-map
+         ("C-S-SPC" . nil)
+         ("C-c C-a" . lsp-execute-code-action)
+         ("C-c C-i" . lsp-format-region)
+         ("C-c C-n" . lsp-rename)
+         ("C-c C-r" . lsp-workspace-restart)
+         ("C-c C-t" . lsp-describe-thing-at-point))
+  :config
+  (define-key lsp-mode-map (kbd "M-z") lsp-command-map)
+  (leaf lsp-metals)
+  (leaf lsp-ui
+    :ensure t
+    :defvar lsp-ui-peek-mode-map
+    :custom
+    (lsp-ui-doc-header            . t)        ; ヘッダ表示
+    (lsp-ui-doc-include-signature . t)        ; シグネチャ表示
+    (lsp-ui-doc-position          . 'bottom)  ; カーソル位置
+    (lsp-ui-sideline-enable       . nil)      ; サイドライン
+    :bind (:lsp-ui-mode-map
+           ("C-c C-d" . lsp-ui-doc-show)))
+  (leaf dap-mode
+    :ensure t
+    :hook
+    (lsp-mode-hook . dap-mode)
+    (lsp-mode-hook . dap-ui-mode)))
+
+(leaf yasnippet
+  :ensure  t
+  :require t
+  :bind (:yas-minor-mode-map
+         ("<tab>"   . nil)
+         ("TAB"     . nil)
+         ("C-c C-y" . company-yasnippet))
+  :config
+  (yas-global-mode)
+  (leaf yasnippet-snippets :ensure t))
+
+(leaf company
+  :doc "Modular text completion framework"
+  :req "emacs-24.3"
+  :tag "matching" "convenience" "abbrev" "emacs>=24.3"
+  :url "http://company-mode.github.io/"
+  :emacs>= 24.3
+  :ensure t
+  :blackout t
+  :leaf-defer nil
+  :bind ((company-active-map
+          ("M-n"   . nil)
+          ("M-p"   . nil)
+          ("C-s"   . company-filter-candidates)
+          ("C-n"   . company-select-next)
+          ("C-p"   . company-select-previous)
+          ("<tab>" . company-complete-selection))
+         (company-search-map
+          ("C-n"  . company-select-next)
+          ("C-p"  . company-select-previous)))
+  :custom ((company-idle-delay   . 0)
+           (company-minimum-prefix-length . 1)
+           (company-transformers . '(company-sort-by-occurrence)))
+  :global-minor-mode global-company-mode)
+
+(leaf company-c-headers
+  :doc "Company mode backend for C/C++ header files"
+  :req "emacs-24.1" "company-0.8"
+  :tag "company" "development" "emacs>=24.1"
+  :added "2020-03-25"
+  :emacs>= 24.1
+  :ensure t
+  :after company
+  :defvar company-backends
+  :config
+  (add-to-list 'company-backends 'company-c-headers))
+
+;;--------------------------------------------------------------------------
+;; Language Dev Enviroment
+;;--------------------------------------------------------------------------
+(leaf cc-mode
+  :doc "major mode for editing C and similar languages"
+  :tag "builtin"
+  :defvar (c-basic-offset)
+  :bind   (c-mode-base-map
+           ("C-c c" . compile))
+  :mode-hook
+  (c-mode-hook   . ((c-set-style "bsd") (setq c-basic-offset 2)))
+  (c++-mode-hook . ((c-set-style "bsd") (setq c-basic-offset 2))))
+
+(leaf scala-mode
+  :ensure t
+  :hook
+  (scala-mode-hook . lsp)
+  :config
+  (leaf lsp-metals :ensure t :require t))
+
+(leaf typescript-mode
+  :ensure t
+  :custom
+  (typescript-indent-level . 2)
+  )
+
+(leaf scss-mode
+  :if (executable-find "sass")
+  :ensure t
+  :mode "\\.scss\\'"
+  :custom
+  `((scss-sass-command . ,(executable-find "sass")))
+  )
+
+(leaf yaml-mode
+  :ensure t
+  :leaf-defer t
+  :mode ("\\.yaml\\'" . yaml-mode))
+
+
+(leaf dockerfile-mode :ensure t)
 
 (provide 'init)
 

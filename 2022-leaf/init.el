@@ -60,27 +60,40 @@
     (redraw-frame))
 
   :bind (("M-ESC ESC" . c/redraw-frame))
-  :custom '((user-full-name                  . "Yoshinobu Kinugasa")
-            (user-mail-address               . "yoshinobu.kinugasa@ixias.net")
-            (user-login-name                 . "sp1rytus")
-            (use-dialog-box                  . nil)
-            (use-file-dialog                 . nil)
-            (menu-bar-mode                   . nil)
-            (tool-bar-mode                   . nil)
-            (scroll-bar-mode                 . nil)
-            (indent-tabs-mode                . nil)
-            (create-lockfiles                . nil)
+  :custom '(
+            (ring-bell-function  . 'ignore)
+            (use-dialog-box      . nil)
+            (use-file-dialog     . nil)
+            (menu-bar-mode       . nil)
+            (tool-bar-mode       . nil)
+            (scroll-bar-mode     . nil)
+            (create-lockfiles    . nil)
+            (column-number-mode  . t)
+            (column-number-mode  . t)
+            (line-number-mode    . t)
+            ;; 編集
+            (scroll-step                           . 1)
+            (next-screen-context-lines             . 10)
+            (tab-width                             . 2)
+            (indent-tabs-mode                      . nil)
+            (fill-column                           . 72)
+            (truncate-lines                        . nil)
+            (truncate-partial-width-windows        . t)
+            (paragraph-start                       . '"^\\([ 　・○<\t\n\f]\\|(?[0-9a-zA-Z]+)\\)")
+            (auto-fill-mode                        . nil)
+            (next-line-add-newlines                . nil)
+            (read-file-name-completion-ignore-case . nil)
+            (save-abbrevs                          . 'silent)
+            ;; backup
             (debug-on-error                  . t)
             (init-file-debug                 . t)
             (frame-resize-pixelwise          . t)
             (enable-recursive-minibuffers    . t)
-            (truncate-lines                  . t)
             (history-length                  . 1000)
             (history-delete-duplicates       . t)
             (scroll-preserve-screen-position . t)
             (scroll-conservatively           . 100)
             (mouse-wheel-scroll-amount       . '(1 ((control) . 5)))
-            (ring-bell-function              . 'ignore)
             (text-quoting-style              . 'straight))
   :config
   (defalias 'yes-or-no-p 'y-or-n-p)
@@ -282,6 +295,10 @@
   :ensure t
   :hook
   (scala-mode-hook . lsp)
+  :init
+  (setq
+   scala-indent:use-javadoc-style t
+   scala-indent:align-parameters t)
   :config
   (leaf lsp-metals :ensure t :require t))
 

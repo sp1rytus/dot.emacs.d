@@ -150,6 +150,31 @@
     ("C-w" . backward-kill-word)
     )))
 
+(leaf ispell
+  :if (file-executable-p "aspell")
+  :custom
+  (ispell-program-name . "aspell")
+  :config
+  (add-to-list 'ispell-skip-region-alist '("[^\000-\377]+"))
+  )
+
+(leaf flyspell
+  :ensure t
+  :blackout (flyspell-mode . "F")
+  :defun
+  flyspell-emacs-popup-textual
+  :preface
+  (defun my:flyspell-popup-choose (orig event poss word)
+    (if (window-system)
+        (funcall orig event poss word)
+      (flyspell-emacs-popup-textual event poss word)))
+  :advice (:around flyspell-emacs-popup
+                   my:flyspell-popup-choose)
+  :hook
+  ((scala-mode-hook . flyspell-mode))
+  )
+
+
 ;;--------------------------------------------------------------------------
 ;; IDE Enviroment
 ;;--------------------------------------------------------------------------
@@ -181,10 +206,10 @@
     :ensure t
     :defvar lsp-ui-peek-mode-map
     :custom
-    (lsp-ui-doc-header            . t)        ; ヘッダ表示
-    (lsp-ui-doc-include-signature . t)        ; シグネチャ表示
-    (lsp-ui-doc-position          . 'bottom)  ; カーソル位置
-    (lsp-ui-sideline-enable       . nil)      ; サイドライン
+    (lsp-ui-doc-header            . t)
+    (lsp-ui-doc-include-signature . t)
+    (lsp-ui-doc-position          . 'bottom)
+    (lsp-ui-sideline-enable       . nil)
     :bind (:lsp-ui-mode-map
            ("C-c C-d" . lsp-ui-doc-show)))
   (leaf dap-mode

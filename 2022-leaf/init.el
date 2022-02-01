@@ -308,6 +308,11 @@
   (typescript-indent-level . 2)
   )
 
+(leaf mhtml-mode
+  :ensure t
+  :leaf-defer t
+  :mode ("\\.html\\'" . mhtml-mode))
+
 (leaf scss-mode
   :if (executable-find "sass")
   :ensure t

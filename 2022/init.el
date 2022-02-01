@@ -1,34 +1,8 @@
-;;; init.el --- My init.el  -*- lexical-binding: t; -*-
-;; this enables this running method
-;;   emacs -q -l ~/.debug.emacs.d/init.el
+;; -*- lexical-binding: t -*-
 
-(custom-set-variables `(gc-cons-threshold ,(* gc-cons-threshold 20)))
-
-(setq user-init-file (or load-file-name (buffer-file-name)))
-(setq user-emacs-directory (file-name-directory user-init-file))
-
-;; tmux 内にいる && Emacs がインタラクティブに起動 && "Emacs" が window-name にないとき
-;; window-name を設定する。
-;; また、Emacs 終了時に automatic-rename を有効にする
-(let ((case-fold-search nil)            ; case-sensitive
-      (tmux-title-of-emacs "Emacs"))
-  (when (and (getenv "TMUX")
-             (not noninteractive)
-             (not (string-match-p
-                   (concat  "^[0-9]+: " tmux-title-of-emacs)
-                   (shell-command-to-string "tmux lsw"))))
-    (shell-command (format "tmux rename-window '%s'" tmux-title-of-emacs))
-    (add-hook 'kill-emacs-hook
-              (lambda ()
-                (shell-command "tmux set-window-option automatic-rename on")))))
-
-(define-key key-translation-map (kbd "C-h") (kbd "<DEL>"))
-(setq custom-file (concat user-emacs-directory "custom.el"))
-(setq garbage-collection-messages t)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; this enables this running method
-;;   emacs -q -l ~/.debug.emacs.d/{{pkg}}/init.el
+;;--------------------------------------------------------------------------
+;; My Custom Settings
+;;--------------------------------------------------------------------------
 (eval-and-compile
   (when (or load-file-name byte-compile-current-file)
     (setq user-emacs-directory
@@ -49,77 +23,85 @@
     :ensure t
     :init
     ;; optional packages if you want to use :hydra, :el-get, :blackout,,,
-    (leaf hydra :ensure t)
-    (leaf el-get :ensure t)
+    (leaf hydra    :ensure t)
+    (leaf el-get   :ensure t)
     (leaf blackout :ensure t)
 
     :config
     ;; initialize leaf-keywords.el
     (leaf-keywords-init)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; 見た目
-(leaf *font
+(leaf leaf
   :config
-  (set-face-attribute 'default nil :family "HackGenNerdConsole" :height 135)
-  (set-fontset-font t 'unicode (font-spec :name "HackGenNerdConsole") nil 'append)
-  (set-fontset-font t '(#x1F000 . #x1FAFF) (font-spec :name "Noto Color Emoji") nil 'append))
-
-(leaf basic-key-bindings
-  :init
-  (global-unset-key (kbd "C-q"))
-  (global-unset-key (kbd "C-x DEL"))
-  (leaf basic-key-bindings-bind
-    :init
-    (defun switch-to-used-buffer ()
-      (interactive)
-      (switch-to-buffer nil))
-
-    :bind (("<tab>" . indent-for-tab-command)
-           
-           ("C-x <RET> u" . revert-buffer-with-coding-system-utf-8-unix)
-           ("C-x <RET> s" . revert-buffer-with-coding-system-japanese-cp932-dos))))
-
-(leaf window-system
-  :if (window-system)
-  :init
-  (global-unset-key (kbd "C-t"))
-  (set-face-foreground 'vertical-border "#555")
-  (defun my-emacs-startup-hook-handler ()
-    (toggle-frame-fullscreen)
-    (scroll-bar-mode -1)
-    (tool-bar-mode -1)
-    (menu-bar-mode 1)
-    (global-hl-line-mode 1))
-  (leaf all-the-icons
-    :doc "A library for inserting Developer icons"
-    :req "emacs-24.3"
-    :tag "lisp" "convenient" "emacs>=24.3"
-    :added "2021-04-08"
-    :url "https://github.com/domtronn/all-the-icons.el"
-    :emacs>= 24.3
+  (leaf leaf-convert :ensure t)
+  (leaf leaf-tree
     :ensure t
-    :require t)
-  (leaf doom-modeline
-    :doc "A minimal and modern mode-line"
-    :req "emacs-25.1" "all-the-icons-2.2.0" "shrink-path-0.2.0" "dash-2.11.0"
-    :tag "mode-line" "faces" "emacs>=25.1"
-    :added "2021-04-08"
-    :url "https://github.com/seagle0128/doom-modeline"
-    :emacs>= 25.1
-    :ensure t
-    :after all-the-icons
-    :init (doom-modeline-mode 1))
-  (leaf pos-tip
-    :doc "Show tooltip at point"
-    :tag "tooltip"
-    :added "2021-04-12"
-    :ensure t
-    :custom ((pos-tip-border-width . 2)
-             (pos-tip-internal-border-width . 5)
-             (pos-tip-foreground-color . "gray20")
-             (pos-tip-background-color . "light cyan"))))
+    :custom ((imenu-list-size . 30)
+             (imenu-list-position . 'left))))
 
+(leaf macrostep
+  :ensure t
+  :bind (("C-c e" . macrostep-expand)))
+
+;;--------------------------------------------------------------------------
+;; System
+;;--------------------------------------------------------------------------
+(leaf cus-edit
+  :doc "tools for customizing Emacs and Lisp packages"
+  :tag "builtin" "faces" "help"
+  :custom `((custom-file . ,(locate-user-emacs-file "custom.el"))))
+
+(leaf cus-start
+  :doc "define customization properties of builtins"
+  :tag "builtin" "internal"
+  :preface
+  (defun c/redraw-frame nil
+    (interactive)
+    (redraw-frame))
+
+  :bind (("M-ESC ESC" . c/redraw-frame))
+  :custom '(
+            (ring-bell-function  . 'ignore)
+            (use-dialog-box      . nil)
+            (use-file-dialog     . nil)
+            (menu-bar-mode       . nil)
+            (tool-bar-mode       . nil)
+            (scroll-bar-mode     . nil)
+            (create-lockfiles    . nil)
+            (column-number-mode  . t)
+            (column-number-mode  . t)
+            (line-number-mode    . t)
+            ;; 編集
+            (scroll-step                           . 1)
+            (next-screen-context-lines             . 10)
+            (tab-width                             . 2)
+            (indent-tabs-mode                      . nil)
+            (fill-column                           . 72)
+            (truncate-lines                        . nil)
+            (truncate-partial-width-windows        . t)
+            (paragraph-start                       . '"^\\([ 　・○<\t\n\f]\\|(?[0-9a-zA-Z]+)\\)")
+            (auto-fill-mode                        . nil)
+            (next-line-add-newlines                . nil)
+            (read-file-name-completion-ignore-case . nil)
+            (save-abbrevs                          . 'silent)
+            ;; backup
+            (debug-on-error                  . t)
+            (init-file-debug                 . t)
+            (frame-resize-pixelwise          . t)
+            (enable-recursive-minibuffers    . t)
+            (history-length                  . 1000)
+            (history-delete-duplicates       . t)
+            (scroll-preserve-screen-position . t)
+            (scroll-conservatively           . 100)
+            (mouse-wheel-scroll-amount       . '(1 ((control) . 5)))
+            (text-quoting-style              . 'straight))
+  :config
+  (defalias 'yes-or-no-p 'y-or-n-p)
+  (keyboard-translate ?\C-h ?\C-?))
+
+;;--------------------------------------------------------------------------
+;; Color Themes
+;;--------------------------------------------------------------------------
 (leaf themes
   :custom-face
   (mode-line          . '((t (:box "dark olive green"))))
@@ -148,166 +130,209 @@
     (custom-set-faces '(default ((t (:background "#030303")))))
     ))
 
-(leaf ansi-color
-  :config
-  (defun my-colorize-compilation-buffer ()
-    (when (eq major-mode 'compilation-mode)
-      (ansi-color-apply-on-region compilation-filter-start (point-max))))
-  :hook (compilation-filter-hook . my-colorize-compilation-buffer))
+;;--------------------------------------------------------------------------
+;; Key Bindings
+;;--------------------------------------------------------------------------
+(leaf *global-set-key
+  :leaf-autoload nil
+  :bind
+  ("<tab>"    . indent-for-tab-command)
+  ("<f7>"     . enlarge-window-horizontally)
+  ("<f8>"     . enlarge-window)
+  ("<f11>"    . ibuffer)
+  ("<f12>"    . undo)
+  ("M-z"      . lsp)
+  
+  ("<help> c" . helpful-command)
+  ("<help> w" . helm-man-woman)
 
+  ("C-x <RET> u" . revert-buffer-with-coding-system-utf-8-unix)
+  ("C-x <RET> s" . revert-buffer-with-coding-system-japanese-cp932-dos))
 
-(leaf font-core :config (global-font-lock-mode 1))
+;;--------------------------------------------------------------------------
+;; Common Behavior
+;;--------------------------------------------------------------------------
 (leaf dired
   :custom
   (dired-isearch-filenames . t)
   (dired-listing-switches  . "-al --group-directories-first"))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; 独立した関数定義
-(leaf cus-edit
-  :doc "tools for customizing Emacs and Lisp packages"
-  :tag "builtin" "faces" "help"
-  :custom `((custom-file . ,(locate-user-emacs-file "custom.el"))))
+(leaf minibuffer
+  :bind
+  ((minibuffer-local-completion-map
+    ("C-w" . backward-kill-word)
+    )))
 
-(leaf cus-start
-  :doc "define customization properties of builtins"
-  :tag "builtin" "internal"
-  :preface
-  (defun c/redraw-frame nil
-    (interactive)
-    (redraw-frame))
-
-  :bind (("M-ESC ESC" . c/redraw-frame))
-  :custom '((user-full-name . "Yoshinobu Kinugasa")
-            (user-mail-address . "yoshinobu.kinugasa@ixias.net")
-            (user-login-name . "sp1rytus")
-            (create-lockfiles . nil)
-            (debug-on-error . t)
-            (init-file-debug . t)
-            (frame-resize-pixelwise . t)
-            (enable-recursive-minibuffers . t)
-            (history-length . 1000)
-            (history-delete-duplicates . t)
-            (scroll-preserve-screen-position . t)
-            (scroll-conservatively . 100)
-            (mouse-wheel-scroll-amount . '(1 ((control) . 5)))
-            (ring-bell-function . 'ignore)
-            (text-quoting-style . 'straight)
-            (truncate-lines . t)
-            ;; (use-dialog-box . nil)
-            ;; (use-file-dialog . nil)
-            ;; (menu-bar-mode . t)
-            ;; (tool-bar-mode . nil)
-            (scroll-bar-mode . nil)
-            (indent-tabs-mode . nil))
+(leaf ispell
+  :if (file-executable-p "aspell")
+  :custom
+  (ispell-program-name . "aspell")
   :config
-  (defalias 'yes-or-no-p 'y-or-n-p)
-  (keyboard-translate ?\C-h ?\C-?))
+  (add-to-list 'ispell-skip-region-alist '("[^\000-\377]+"))
+  )
 
-(leaf paren
-  :doc "highlight matching paren"
-  :tag "builtin"
-  :custom ((show-paren-delay . 0.1))
-  :global-minor-mode show-paren-mode)
+(leaf flyspell
+  :ensure t
+  :blackout (flyspell-mode . "F")
+  :defun
+  flyspell-emacs-popup-textual
+  :preface
+  (defun my:flyspell-popup-choose (orig event poss word)
+    (if (window-system)
+        (funcall orig event poss word)
+      (flyspell-emacs-popup-textual event poss word)))
+  :advice (:around flyspell-emacs-popup
+                   my:flyspell-popup-choose)
+  :hook
+  ((scala-mode-hook . flyspell-prog-mode))
+  )
 
-(leaf simple
-  :doc "basic editing commands for Emacs"
-  :tag "builtin" "internal"
-  :custom ((kill-ring-max . 100)
-           (kill-read-only-ok . t)
-           (kill-whole-line . t)
-	   (blink-matching-paren . nil)
-           (eval-expression-print-length . nil)
-           (eval-expression-print-level . nil)))
 
-(leaf files
-  :doc "file input and output commands for Emacs"
-  :tag "builtin"
-  :custom `((auto-save-timeout . 15)
-            (auto-save-interval . 60)
-            (auto-save-file-name-transforms . '((".*" ,(locate-user-emacs-file "backup/") t)))
-            (backup-directory-alist . '((".*" . ,(locate-user-emacs-file "backup"))
-                                        (,tramp-file-name-regexp . nil)))
-            (version-control . t)
-            (delete-old-versions . t)))
+;;--------------------------------------------------------------------------
+;; IDE Enviroment
+;;--------------------------------------------------------------------------
+(leaf lsp-mode
+  :ensure t
+  :after  t
+  :defun  lsp-enable-which-key-integration
+  :defvar lsp-command-map lsp-signature-mode-map
+  :custom
+  (lsp-auto-guess-root              . nil)
+  (lsp-enable-snippet               . nil)
+  (lsp-keymap-prefix                . "M-z")
+  (lsp-lens-mode                    . t)
+  (lsp-prefer-flymake               . nil)
+  (lsp-headerline-breadcrumb-enable . nil)
+  (read-process-output-max          . 1048576)
+  (lsp-completion-provider          . :capf)
+  :bind (:lsp-mode-map
+         ("C-S-SPC" . nil)
+         ("C-c C-a" . lsp-execute-code-action)
+         ("C-c C-i" . lsp-format-region)
+         ("C-c C-n" . lsp-rename)
+         ("C-c C-r" . lsp-workspace-restart)
+         ("C-c C-t" . lsp-describe-thing-at-point))
+  :config
+  (define-key lsp-mode-map (kbd "M-z") lsp-command-map)
+  (leaf lsp-metals)
+  (leaf lsp-ui
+    :ensure t
+    :defvar lsp-ui-peek-mode-map
+    :custom
+    (lsp-ui-doc-header            . t)
+    (lsp-ui-doc-include-signature . t)
+    (lsp-ui-doc-position          . 'bottom)
+    (lsp-ui-sideline-enable       . nil)
+    :bind (:lsp-ui-mode-map
+           ("C-c C-d" . lsp-ui-doc-show)))
+  (leaf dap-mode
+    :ensure t
+    :hook
+    (lsp-mode-hook . dap-mode)
+    (lsp-mode-hook . dap-ui-mode)))
 
-(leaf startup
-  :doc "process Emacs shell arguments"
-  :tag "builtin" "internal"
-  :custom `((auto-save-list-file-prefix . ,(locate-user-emacs-file "backup/.saves-"))))
+(leaf yasnippet
+  :ensure  t
+  :require t
+  :bind (:yas-minor-mode-map
+         ("<tab>"   . nil)
+         ("TAB"     . nil)
+         ("C-c C-y" . company-yasnippet))
+  :config
+  (yas-global-mode)
+  (leaf yasnippet-snippets :ensure t))
 
-(leaf ivy
-  :doc "Incremental Vertical completYon"
-  :req "emacs-24.5"
-  :tag "matching" "emacs>=24.5"
-  :url "https://github.com/abo-abo/swiper"
-  :emacs>= 24.5
+(leaf company
+  :doc "Modular text completion framework"
+  :req "emacs-24.3"
+  :tag "matching" "convenience" "abbrev" "emacs>=24.3"
+  :url "http://company-mode.github.io/"
+  :emacs>= 24.3
   :ensure t
   :blackout t
   :leaf-defer nil
-  :custom ((ivy-initial-inputs-alist . nil)
-           (ivy-use-selectable-prompt . t)
-           )
-  :global-minor-mode t
+  :bind ((company-active-map
+          ("M-n"   . nil)
+          ("M-p"   . nil)
+          ("C-s"   . company-filter-candidates)
+          ("C-n"   . company-select-next)
+          ("C-p"   . company-select-previous)
+          ("<tab>" . company-complete-selection))
+         (company-search-map
+          ("C-n"  . company-select-next)
+          ("C-p"  . company-select-previous)))
+  :custom ((company-idle-delay   . 0)
+           (company-minimum-prefix-length . 1)
+           (company-transformers . '(company-sort-by-occurrence)))
+  :global-minor-mode global-company-mode)
+
+(leaf company-c-headers
+  :doc "Company mode backend for C/C++ header files"
+  :req "emacs-24.1" "company-0.8"
+  :tag "company" "development" "emacs>=24.1"
+  :added "2020-03-25"
+  :emacs>= 24.1
+  :ensure t
+  :after company
+  :defvar company-backends
   :config
-  (leaf swiper
-    :doc "Isearch with an overview. Oh, man!"
-    :req "emacs-24.5" "ivy-0.13.0"
-    :tag "matching" "emacs>=24.5"
-    :url "https://github.com/abo-abo/swiper"
-    :emacs>= 24.5
-    :ensure t
-    :bind (("C-s" . swiper))
-    (ivy-minibuffer-map
-     ("C-w" . backward-kill-word)
-     ))
+  (add-to-list 'company-backends 'company-c-headers))
 
-  (leaf counsel
-    :doc "Various completion functions using Ivy"
-    :req "emacs-24.5" "swiper-0.13.0"
-    :tag "tools" "matching" "convenience" "emacs>=24.5"
-    :url "https://github.com/abo-abo/swiper"
-    :emacs>= 24.5
-    :ensure t
-    :blackout t
-    :bind (("C-S-s" . counsel-imenu)
-           ("C-x C-r" . counsel-recentf))
-    :custom `((counsel-yank-pop-separator . "\n----------\n")
-              (counsel-find-file-ignore-regexp . ,(rx-to-string '(or "./" "../") 'no-group)))
-    :global-minor-mode t))
-
-(leaf prescient
-  :doc "Better sorting and filtering"
-  :req "emacs-25.1"
-  :tag "extensions" "emacs>=25.1"
-  :url "https://github.com/raxod502/prescient.el"
-  :emacs>= 25.1
-  :ensure t
-  :custom ((prescient-aggressive-file-save . t))
-  :global-minor-mode prescient-persist-mode)
-  
-(leaf ivy-prescient
-  :doc "prescient.el + Ivy"
-  :req "emacs-25.1" "prescient-4.0" "ivy-0.11.0"
-  :tag "extensions" "emacs>=25.1"
-  :url "https://github.com/raxod502/prescient.el"
-  :emacs>= 25.1
-  :ensure t
-  :after prescient ivy
-  :custom ((ivy-prescient-retain-classic-highlighting . t))
-  :global-minor-mode t)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Proguram Languages
-;;; Scala
+;;--------------------------------------------------------------------------
+;; Language Dev Enviroment
+;;--------------------------------------------------------------------------
+(leaf cc-mode
+  :doc "major mode for editing C and similar languages"
+  :tag "builtin"
+  :defvar (c-basic-offset)
+  :bind   (c-mode-base-map
+           ("C-c c" . compile))
+  :mode-hook
+  (c-mode-hook   . ((c-set-style "bsd") (setq c-basic-offset 2)))
+  (c++-mode-hook . ((c-set-style "bsd") (setq c-basic-offset 2))))
 
 (leaf scala-mode
-  :ensure t)
-  ;; :hook
-  ;; (scala-mode-hook . lsp)
-  ;; (scala-mode-hook . lsp-format-before-save))
-  ;; :config
-  ;; (leaf lsp-metals :ensure t :require t)
-  ;; (leaf smartparens :config (sp-local-pair 'scala-mode "{" nil :post-handlers nil)))
+  :ensure t
+  :hook
+  (scala-mode-hook . lsp)
+  :init
+  (setq
+   scala-indent:use-javadoc-style t
+   scala-indent:align-parameters t)
+  :config
+  (leaf lsp-metals :ensure t :require t))
+
+(leaf typescript-mode
+  :ensure t
+  :custom
+  (typescript-indent-level . 2)
+  )
+
+(leaf mhtml-mode
+  :ensure t
+  :leaf-defer t
+  :mode ("\\.html\\'" . mhtml-mode))
+
+(leaf scss-mode
+  :if (executable-find "sass")
+  :ensure t
+  :mode "\\.scss\\'"
+  :custom
+  `((scss-sass-command . ,(executable-find "sass")))
+  )
+
+(leaf yaml-mode
+  :ensure t
+  :leaf-defer t
+  :mode ("\\.yaml\\'" . yaml-mode))
+
+
+(leaf dockerfile-mode :ensure t)
 
 (provide 'init)
+
+;; Local Variables:
+;; indent-tabs-mode: nil
+;; End:
+
+;;; init.el ends here

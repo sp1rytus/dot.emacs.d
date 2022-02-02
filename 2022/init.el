@@ -99,6 +99,22 @@
   (defalias 'yes-or-no-p 'y-or-n-p)
   (keyboard-translate ?\C-h ?\C-?))
 
+(leaf files
+  :doc "file input and output commands for Emacs"
+  :tag "builtin"
+  :custom `((auto-save-timeout . 15)
+            (auto-save-interval . 60)
+            (auto-save-file-name-transforms . '((".*" ,(locate-user-emacs-file "backup/") t)))
+            (backup-directory-alist . '((".*" . ,(locate-user-emacs-file "backup"))
+                                        (,tramp-file-name-regexp . nil)))
+            (version-control . t)
+            (delete-old-versions . t)))
+
+(leaf startup
+  :doc "process Emacs shell arguments"
+  :tag "builtin" "internal"
+  :custom `((auto-save-list-file-prefix . ,(locate-user-emacs-file "backup/.saves-"))))
+
 ;;--------------------------------------------------------------------------
 ;; Color Themes
 ;;--------------------------------------------------------------------------

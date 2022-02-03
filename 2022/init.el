@@ -46,6 +46,15 @@
 ;;--------------------------------------------------------------------------
 ;; System
 ;;--------------------------------------------------------------------------
+(leaf locale
+    :setq-default ((buffer-file-coding-system quote utf-8))
+    :config
+    (set-language-environment "Japanese")
+    (prefer-coding-system 'utf-8)
+    (set-default-coding-systems 'utf-8)
+    (set-terminal-coding-system 'utf-8)
+    (set-keyboard-coding-system 'utf-8))
+
 (leaf cus-edit
   :doc "tools for customizing Emacs and Lisp packages"
   :tag "builtin" "faces" "help"
@@ -158,7 +167,7 @@
   ("<f11>"    . ibuffer)
   ("<f12>"    . undo)
   ("M-z"      . lsp)
-  
+
   ("<help> c" . helpful-command)
   ("<help> w" . helm-man-woman)
 
@@ -203,6 +212,21 @@
   ((scala-mode-hook . flyspell-prog-mode))
   )
 
+(leaf *trailing-white-space
+  :preface
+  (defvar my:delete-trailing-whitespace-exclude-suffix
+    (list "\\.rd$" "\\.md$" "\\.rbt$" "\\.rab$"))
+  (defun my:delete-trailing-whitespace ()
+    (interactive)
+    (eval-when-compile (require 'cl-lib))
+    (cond
+     ((equal nil
+             (cl-loop for pattern in my:delete-trailing-whitespace-exclude-suffix
+                      thereis (string-match pattern buffer-file-name)))
+      (delete-trailing-whitespace))))
+  :hook
+  (before-save-hook . my:delete-trailing-whitespace)
+  )
 
 ;;--------------------------------------------------------------------------
 ;; IDE Enviroment
@@ -314,7 +338,7 @@
   :init
   (setq
    scala-indent:use-javadoc-style t
-   scala-indent:align-parameters t)
+  )
   :config
   (leaf lsp-metals :ensure t :require t))
 

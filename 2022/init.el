@@ -353,10 +353,16 @@
   :leaf-defer t
   :mode ("\\.html\\'" . mhtml-mode))
 
+(leaf css-mode
+  :ensure nil
+  :init (setq css-indent-offset 2))
+
 (leaf scss-mode
   :if (executable-find "sass")
   :ensure t
   :mode "\\.scss\\'"
+  :init
+  ((setq scss-compile-at-save nil))
   :custom
   `((scss-sass-command . ,(executable-find "sass")))
   )

@@ -231,45 +231,45 @@
 ;;--------------------------------------------------------------------------
 ;; IDE Enviroment
 ;;--------------------------------------------------------------------------
-(leaf lsp-mode
-  :ensure t
-  :after  t
-  :defun  lsp-enable-which-key-integration
-  :defvar lsp-command-map lsp-signature-mode-map
-  :custom
-  (lsp-auto-guess-root              . nil)
-  (lsp-enable-snippet               . nil)
-  (lsp-keymap-prefix                . "M-z")
-  (lsp-lens-mode                    . t)
-  (lsp-prefer-flymake               . nil)
-  (lsp-headerline-breadcrumb-enable . nil)
-  (read-process-output-max          . 1048576)
-  (lsp-completion-provider          . :capf)
-  :bind (:lsp-mode-map
-         ("C-S-SPC" . nil)
-         ("C-c C-a" . lsp-execute-code-action)
-         ("C-c C-i" . lsp-format-region)
-         ("C-c C-n" . lsp-rename)
-         ("C-c C-r" . lsp-workspace-restart)
-         ("C-c C-t" . lsp-describe-thing-at-point))
-  :config
-  (define-key lsp-mode-map (kbd "M-z") lsp-command-map)
-  (leaf lsp-metals)
-  (leaf lsp-ui
-    :ensure t
-    :defvar lsp-ui-peek-mode-map
-    :custom
-    (lsp-ui-doc-header            . t)
-    (lsp-ui-doc-include-signature . t)
-    (lsp-ui-doc-position          . 'bottom)
-    (lsp-ui-sideline-enable       . nil)
-    :bind (:lsp-ui-mode-map
-           ("C-c C-d" . lsp-ui-doc-show)))
-  (leaf dap-mode
-    :ensure t
-    :hook
-    (lsp-mode-hook . dap-mode)
-    (lsp-mode-hook . dap-ui-mode)))
+;; (leaf lsp-mode
+;;   :ensure t
+;;   :after  t
+;;   :defun  lsp-enable-which-key-integration
+;;   :defvar lsp-command-map lsp-signature-mode-map
+;;   :custom
+;;   (lsp-auto-guess-root              . nil)
+;;   (lsp-enable-snippet               . nil)
+;;   (lsp-keymap-prefix                . "M-z")
+;;   (lsp-lens-mode                    . t)
+;;   (lsp-prefer-flymake               . nil)
+;;   (lsp-headerline-breadcrumb-enable . nil)
+;;   (read-process-output-max          . 1048576)
+;;   (lsp-completion-provider          . :capf)
+;;   :bind (:lsp-mode-map
+;;          ("C-S-SPC" . nil)
+;;          ("C-c C-a" . lsp-execute-code-action)
+;;          ("C-c C-i" . lsp-format-region)
+;;          ("C-c C-n" . lsp-rename)
+;;          ("C-c C-r" . lsp-workspace-restart)
+;;          ("C-c C-t" . lsp-describe-thing-at-point))
+;;   :config
+;;   (define-key lsp-mode-map (kbd "M-z") lsp-command-map)
+;;   (leaf lsp-metals)
+;;   (leaf lsp-ui
+;;     :ensure t
+;;     :defvar lsp-ui-peek-mode-map
+;;     :custom
+;;     (lsp-ui-doc-header            . t)
+;;     (lsp-ui-doc-include-signature . t)
+;;     (lsp-ui-doc-position          . 'bottom)
+;;     (lsp-ui-sideline-enable       . nil)
+;;     :bind (:lsp-ui-mode-map
+;;            ("C-c C-d" . lsp-ui-doc-show)))
+;;   (leaf dap-mode
+;;     :ensure t
+;;     :hook
+;;     (lsp-mode-hook . dap-mode)
+;;     (lsp-mode-hook . dap-ui-mode)))
 
 (leaf yasnippet
   :ensure  t
@@ -318,6 +318,53 @@
   :config
   (add-to-list 'company-backends 'company-c-headers))
 
+(leaf whitespace
+  :ensure t
+  :bind ("C-c C-c" . my:cleanup-for-spaces)
+  :hook (prog-mode-hook . my:enable-trailing-mode)
+  :config
+  (setq require-final-newline t)
+  (setq show-trailing-whitespace t)
+  (set-face-background 'trailing-whitespace "brightwhite")
+  :init
+  (defun my:enable-trailing-mode ()
+    "Show tail whitespace."
+    (setq show-trailing-whitespace t))
+
+  (defun my-c-mode-hook ()
+    (c-set-style "linux")
+    (setq c-basic-offset tab-width))
+  (add-hook 'c-mode-hook 'my-c-mode-hook)
+  (setq-default tab-width 2 indent-tabs-mode nil)
+
+  (defun indent-and-next-line ()
+    (interactive)
+    (indent-according-to-mode)
+    (next-line 1))
+
+  (defun my:cleanup-for-spaces ()
+    "Remove contiguous line breaks at end of line + end of file."
+    (interactive)
+    (delete-trailing-whitespace)
+    (save-excursion
+      (save-restriction
+		(widen)
+		(goto-char (point-max))
+		(delete-blank-lines)))))
+
+  (defface my-face-b-1 '((t (:background "brightwhite"))) nil)
+  (defface my-face-b-2 '((t (:background "brightblack"))) nil)
+  (defvar  my-face-b-1 'my-face-b-1)
+  (defvar  my-face-b-2 'my-face-b-2)
+  (defadvice font-lock-mode (before my-font-lock-mode ())
+    (font-lock-add-keywords
+     major-mode
+     '(("　" 0 my-face-b-1 append)
+       ("\t" 0 my-face-b-2 append)
+       )))
+  (ad-enable-advice 'font-lock-mode 'before 'my-font-lock-mode)
+  (ad-activate 'font-lock-mode)
+
 ;;--------------------------------------------------------------------------
 ;; Language Dev Enviroment
 ;;--------------------------------------------------------------------------
@@ -331,16 +378,23 @@
   (c-mode-hook   . ((c-set-style "bsd") (setq c-basic-offset 2)))
   (c++-mode-hook . ((c-set-style "bsd") (setq c-basic-offset 2))))
 
+;; (leaf scala-mode
+;;   :ensure t
+;;   :hook
+;;   (scala-mode-hook . lsp)
+;;   :init
+;;   (setq
+;;    scala-indent:use-javadoc-style t
+;;   )
+;;   :config
+;;   (leaf lsp-metals :ensure t :require t))
+
 (leaf scala-mode
   :ensure t
-  :hook
-  (scala-mode-hook . lsp)
   :init
   (setq
    scala-indent:use-javadoc-style t
-  )
-  :config
-  (leaf lsp-metals :ensure t :require t))
+  ))
 
 (leaf typescript-mode
   :ensure t

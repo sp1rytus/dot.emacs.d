@@ -348,9 +348,9 @@
     (delete-trailing-whitespace)
     (save-excursion
       (save-restriction
-		(widen)
-		(goto-char (point-max))
-		(delete-blank-lines)))))
+    (widen)
+    (goto-char (point-max))
+    (delete-blank-lines)))))
 
   (defface my-face-b-1 '((t (:background "brightwhite"))) nil)
   (defface my-face-b-2 '((t (:background "brightblack"))) nil)
@@ -396,6 +396,11 @@
    scala-indent:use-javadoc-style t
   ))
 
+(leaf js
+  :custom
+  (js-indent-level . 2)
+  )
+
 (leaf typescript-mode
   :ensure t
   :custom
@@ -421,6 +426,15 @@
   `((scss-sass-command . ,(executable-find "sass")))
   )
 
+(leaf json-mode
+  :ensure t
+  :mode ("\\.json$")
+  :hook (json-mode-hook . (lambda ()))
+  :custom
+  ((js-indent-level . 2)
+   (json-reformat:indent-width . 2)
+   (tab-width . 2)))
+
 (leaf yaml-mode
   :ensure t
   :leaf-defer t
@@ -436,3 +450,4 @@
 ;; End:
 
 ;;; init.el ends here
+(put 'narrow-to-region 'disabled nil)

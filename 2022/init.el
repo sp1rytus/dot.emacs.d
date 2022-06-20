@@ -394,7 +394,22 @@
   :init
   (setq
    scala-indent:use-javadoc-style t
-  ))
+   ))
+
+(leaf php-mode
+  :package t
+  :hook ((php-mode-hook . my-php-mode-initialize))
+  :init
+  (defun my-php-mode-initialize ()
+    "Initialize `php-mode' before file load."
+    (setq-local indent-tabs-mode nil)
+    (with-eval-after-load 'editorconfig
+      (if (hash-table-p editorconfig-properties-hash)
+          (let* ((indent-style-data (gethash 'indent_style editorconfig-properties-hash))
+                 (indent-style (equal indent-style-data "tab")))
+            (if (not (equal indent-tabs-mode indent-style))
+                (setq-local indent-tabs-mode indent-style)))))))
+
 
 (leaf js
   :custom
@@ -441,6 +456,26 @@
   :mode ("\\.yaml\\'" . yaml-mode))
 
 
+(leaf web-mode
+  :ensure t
+  :after flycheck
+  :defun flycheck-add-mode
+  :mode (("\\.html?\\'" . web-mode)
+         ("\\.scss\\'" . web-mode)
+         ("\\.css\\'" . web-mode)
+         ("\\.twig\\'" . web-mode)
+         ("\\.vue\\'" . web-mode)
+         ("\\.js\\'" . web-mode))
+  :config
+  (flycheck-add-mode 'javascript-eslint 'web-mode)
+  (setq web-mode-markup-indent-offset 2
+        web-mode-css-indent-offset    2
+        web-mode-code-indent-offset   2
+        web-mode-comment-style        2
+        web-mode-style-padding        1
+        web-mode-script-padding       1)
+    )
+
 (leaf dockerfile-mode :ensure t)
 
 (provide 'init)
@@ -451,3 +486,4 @@
 
 ;;; init.el ends here
 (put 'narrow-to-region 'disabled nil)
+(put 'upcase-region 'disabled nil)

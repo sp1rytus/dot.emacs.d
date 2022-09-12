@@ -422,11 +422,6 @@
   (typescript-indent-level . 2)
   )
 
-(leaf mhtml-mode
-  :ensure t
-  :leaf-defer t
-  :mode ("\\.html\\'" . mhtml-mode))
-
 (leaf css-mode
   :ensure nil
   :init (setq css-indent-offset 2))
@@ -440,6 +435,28 @@
   :custom
   `((scss-sass-command . ,(executable-find "sass")))
   )
+
+(leaf web-mode
+  :ensure t
+  :mode (("\\.html?\\'" . web-mode)
+         ("\\.scss\\'" . web-mode)
+         ("\\.css\\'" . web-mode)
+         ("\\.twig\\'" . web-mode)
+         ("\\.vue\\'" . web-mode)
+         ("\\.js\\'" . web-mode))
+  :init
+  (setq web-mode-markup-indent-offset 2
+        web-mode-css-indent-offset 2
+        web-mode-code-indent-offset 2
+        web-mode-comment-style 2
+        web-mode-style-padding 1
+        web-mode-script-padding 1)
+  )
+
+;; (leaf mhtml-mode
+;;   :ensure t
+;;   :leaf-defer t
+;;   :mode ("\\.html\\'" . mhtml-mode))
 
 (leaf json-mode
   :ensure t
@@ -455,26 +472,21 @@
   :leaf-defer t
   :mode ("\\.yaml\\'" . yaml-mode))
 
+(leaf terraform-mode
+  :package t
+  :hook ((terraform-mode-hook . my-terraform-mode-initialize))
+  :init
+  (defun my-terraform-mode-initialize ()
+    "Initialize `terraform-mode' before file load."
+    (setq-local indent-tabs-mode nil)
 
-(leaf web-mode
-  :ensure t
-  :after flycheck
-  :defun flycheck-add-mode
-  :mode (("\\.html?\\'" . web-mode)
-         ("\\.scss\\'" . web-mode)
-         ("\\.css\\'" . web-mode)
-         ("\\.twig\\'" . web-mode)
-         ("\\.vue\\'" . web-mode)
-         ("\\.js\\'" . web-mode))
-  :config
-  (flycheck-add-mode 'javascript-eslint 'web-mode)
-  (setq web-mode-markup-indent-offset 2
-        web-mode-css-indent-offset    2
-        web-mode-code-indent-offset   2
-        web-mode-comment-style        2
-        web-mode-style-padding        1
-        web-mode-script-padding       1)
-    )
+    ;; EditorConfig 対応
+    (with-eval-after-load 'editorconfig
+      (if (hash-table-p editorconfig-properties-hash)
+          (let* ((indent-style-data (gethash 'indent_style editorconfig-properties-hash))
+                 (indent-style (equal indent-style-data "tab")))
+            (if (not (equal indent-tabs-mode indent-style))
+                (setq-local indent-tabs-mode indent-style)))))))
 
 (leaf dockerfile-mode :ensure t)
 

@@ -410,6 +410,13 @@
             (if (not (equal indent-tabs-mode indent-style))
                 (setq-local indent-tabs-mode indent-style)))))))
 
+(leaf terraform-mode
+  :ensure t
+  :mode "\\.tf\\'" "\\.pkr.hcl\\'"
+  :init
+  (add-hook 'terraform-mode-hook 'terraform-format-on-save-mode)
+  (add-hook 'terraform-mode-hook 'hs-minor-mode)
+  )
 
 (leaf js
   :custom
@@ -439,8 +446,6 @@
 (leaf web-mode
   :ensure t
   :mode (("\\.html?\\'" . web-mode)
-         ("\\.scss\\'" . web-mode)
-         ("\\.css\\'" . web-mode)
          ("\\.twig\\'" . web-mode)
          ("\\.vue\\'" . web-mode)
          ("\\.js\\'" . web-mode))

@@ -93,3 +93,46 @@
 ;; シンボリックリンクを開くときの質問省略
 (setq vc-follow-symlinks t)
 
+;; メニューバーを表示しない
+(custom-set-variables
+ '(display-time-mode t)
+ '(tool-bar-mode nil)
+ '(menu-bar-mode nil)
+ '(transient-mark-mode t))
+(custom-set-faces)
+
+;; スクロールバーを消す
+(toggle-scroll-bar nil)
+
+;;--------------------------------------------------------------------------
+;; Color Theme
+;;--------------------------------------------------------------------------
+(use-package doom-themes
+  :ensure t
+  :config
+  ;; カラーテーマを doom-dark+ に設定
+  (load-theme 'doom-dark+ t)
+
+  ;; 各種テーマの設定（オプション）
+  (doom-themes-visual-bell-config) ;; 目に優しいビジュアルベルを有効化
+  (doom-themes-org-config)         ;; org-modeのスタイルをカスタマイズ
+
+  ;; カスタム色を設定
+  (custom-set-faces
+   '(default ((t (:background "#030303"))))))
+
+;;--------------------------------------------------------------------------
+;; Key binding
+;;--------------------------------------------------------------------------
+(global-set-key (kbd "<tab>") 'indent-for-tab-command)
+(global-set-key (kbd "<f7>") 'enlarge-window-horizontally)
+(global-set-key (kbd "<f8>") 'enlarge-window)
+(global-set-key (kbd "<f11>") 'ibuffer)
+(global-set-key (kbd "<f12>") 'undo)
+(global-set-key (kbd "M-z") 'lsp)
+
+(global-set-key (kbd "<help> c") 'helpful-command)
+(global-set-key (kbd "<help> w") 'helm-man-woman)
+
+(global-set-key (kbd "C-x <RET> u") 'revert-buffer-with-coding-system-utf-8-unix)
+(global-set-key (kbd "C-x <RET> s") 'revert-buffer-with-coding-system-japanese-cp932-dos)

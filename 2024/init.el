@@ -14,3 +14,8 @@
 
 ;; 自動的にパッケージをインストール
 (setq use-package-always-ensure t)
+
+(add-to-list 'load-path "~/.emacs.d/inits/")
+(load "01-locale.el")
+(load "02-system.el")
+

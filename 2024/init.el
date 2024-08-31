@@ -1,3 +1,6 @@
+;;--------------------------------------------------------------------------
+;; Package Manager
+;;--------------------------------------------------------------------------
 ;; パッケージ管理のセットアップ
 (require 'package)
 (setq package-archives
@@ -5,6 +8,20 @@
         ("gnu" . "https://elpa.gnu.org/packages/")
         ("melpa-stable" . "https://stable.melpa.org/packages/")))
 (package-initialize)
+
+;; straight.elのインストール
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 5))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
 
 ;; use-packageのインストールと初期設定
 (unless (package-installed-p 'use-package)
@@ -14,6 +31,9 @@
 
 ;; 自動的にパッケージをインストール
 (setq use-package-always-ensure t)
+
+;; use-packageとstraight.elの統合
+(setq straight-use-package-by-default t)
 
 ;;--------------------------------------------------------------------------
 ;; System
@@ -104,6 +124,18 @@
 ;; スクロールバーを消す
 (toggle-scroll-bar nil)
 
+;; dired でディレクトリを先に表示する
+(setq dired-listing-switches "-al --group-directories-first")
+
+;; コマンドサポート
+(use-package which-key
+  :ensure t
+  :init
+  (setq which-key-idle-delay 0.5) ;; ポップアップが表示されるまでの遅延時間を設定
+  :config
+  (which-key-mode)
+  (which-key-setup-side-window-bottom)) ;; ポップアップの表示位置を設定
+
 ;;--------------------------------------------------------------------------
 ;; Color Theme
 ;;--------------------------------------------------------------------------
@@ -136,3 +168,84 @@
 
 (global-set-key (kbd "C-x <RET> u") 'revert-buffer-with-coding-system-utf-8-unix)
 (global-set-key (kbd "C-x <RET> s") 'revert-buffer-with-coding-system-japanese-cp932-dos)
+
+
+;;--------------------------------------------------------------------------
+;; Proguraming Tools
+;;--------------------------------------------------------------------------
+;; 末尾に改行が必ずあるように
+(setq require-final-newline t)
+
+;; 行末の空白を表示
+(setq-default show-trailing-whitespace t)
+(set-face-background 'trailing-whitespace "brightwhite")
+
+;; インデントをスペースに(タブ幅4)
+(defun my-c-mode-hook ()
+  (c-set-style "linux")
+  (setq c-basic-offset tab-width))
+(add-hook 'c-mode-hook 'my-c-mode-hook)
+(setq-default tab-width 2 indent-tabs-mode nil)
+
+;; インデントして次の行に移動する
+(defun indent-and-next-line ()
+  (interactive)
+  (indent-according-to-mode)
+  (forward-line 1))
+
+;; タブと全角スペースに色を付けて目立たせる
+(defface my-face-b-1 '((t (:background "brightwhite"))) "Face for highlighting full-width spaces.")
+(defface my-face-b-2 '((t (:background "brightblack"))) "Face for highlighting tab characters.")
+(defvar my-face-b-1 'my-face-b-1)
+(defvar my-face-b-2 'my-face-b-2)
+(defun my-highlight-tabs-and-fullwidth-spaces ()
+  "Highlight tab characters and full-width spaces."
+  (font-lock-add-keywords nil
+                          '(("　" 0 my-face-b-1 append)
+                            ("\t" 0 my-face-b-2 append))))
+(add-hook 'font-lock-mode-hook 'my-highlight-tabs-and-fullwidth-spaces)
+
+;; Github Copilot
+(use-package copilot
+  :straight (copilot :type git :host github :repo "zerolfx/copilot.el" :files ("*.el" "dist"))
+  :hook (prog-mode . copilot-mode)
+  :bind (:map copilot-completion-map
+              ("<tab>" . 'copilot-accept-completion)
+              ("TAB" . 'copilot-accept-completion)
+              ("C-TAB" . 'copilot-accept-completion-by-word)
+              ("C-<tab>" . 'copilot-accept-completion-by-word)
+              ("C-n" . 'copilot-next-completion)
+              ("C-p" . 'copilot-previous-completion))
+  :config
+  (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2)))
+
+
+;; OpenAI ChatGPT
+(use-package openai
+  :straight (openai :type git :host github :repo "emacs-openai/openai" :files ("*.el"))
+  :config
+  ;; OpenAI APIキーを設定
+  (setq openai-key (getenv "OPENAI_API_KEY"))
+
+  ;; 選択範囲を質問としてChatGPTに送り、回答を挿入する関数
+  (defun ask-chatgpt-and-insert-response (start end)
+    "Send the selected region as a prompt to ChatGPT and insert the response."
+    (interactive "r")
+    (let ((selected-text (buffer-substring-no-properties start end)))
+      (openai-completion
+       selected-text
+       (lambda (response)
+         (insert (cdr (assq 'text (aref (cdr (assq 'choices response)) 0)))))
+       :model "gpt-3.5-turbo-instruct"
+       :max-tokens 1000
+       )))
+  )
+
+;; Magit
+(use-package magit
+  :ensure t
+  :config
+  (use-package copilot
+    :ensure t
+    :hook (magit-commit-mode . copilot-suggest-commit-message)))
+

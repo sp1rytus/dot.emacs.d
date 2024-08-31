@@ -219,6 +219,26 @@
   :config
   (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2)))
 
+;; LSP
+(use-package lsp-mode
+  :ensure t
+  :commands (lsp lsp-deferred)
+  :hook (prog-mode . lsp-deferred)
+  :config
+  (setq lsp-prefer-flymake nil)) ; Flycheck を使用するために Flymake を無効化
+
+(use-package flycheck
+  :ensure t
+  :init (global-flycheck-mode))
+
+(use-package lsp-ui
+  :ensure t
+  :commands lsp-ui-mode
+  :hook (lsp-mode . lsp-ui-mode)
+  :custom
+  (lsp-ui-sideline-enable nil)
+  (lsp-ui-doc-enable nil)
+  (lsp-ui-flycheck-enable t))  ; lsp-ui-flycheck を有効化
 
 ;; OpenAI ChatGPT
 (use-package openai
@@ -244,8 +264,9 @@
 ;; Magit
 (use-package magit
   :ensure t
-  :config
-  (use-package copilot
-    :ensure t
-    :hook (magit-commit-mode . copilot-suggest-commit-message)))
+  :bind ("C-x g" . magit-status))
 
+;; init.elの終端
+(provide 'init)
+
+;;; init.el ends here

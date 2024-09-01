@@ -225,11 +225,11 @@
   :commands (lsp lsp-deferred)
   :hook (prog-mode . lsp-deferred)
   :config
-  (setq lsp-prefer-flymake nil)) ; Flycheck を使用するために Flymake を無効化
-
-(use-package flycheck
-  :ensure t
-  :init (global-flycheck-mode))
+  (setq lsp-idle-delay 0.5)                    ;; アイドル状態0.5秒後にLSPがトリガー
+  (setq lsp-headerline-breadcrumb-enable nil)  ;; パンクズ表示を無効化
+  (setq lsp-diagnostics-provider :none)        ;; デフォルトの設定を無効化
+  (setq lsp-prefer-flymake nil)                ;; Flycheck を使用するために Flymake を無効化
+  )
 
 (use-package lsp-ui
   :ensure t
@@ -239,6 +239,46 @@
   (lsp-ui-sideline-enable nil)
   (lsp-ui-doc-enable nil)
   (lsp-ui-flycheck-enable t))  ; lsp-ui-flycheck を有効化
+
+(use-package flycheck
+  :ensure t
+  :init (global-flycheck-mode)
+  :config
+  ;; FlyCheckの更新頻度を調整
+  (setq flycheck-check-syntax-automatically '(save mode-enabled idle-change))
+  (setq flycheck-idle-change-delay 0.5)  ;; テキスト変更後0.5秒でチェックを開始
+
+  ;; FlyCheckがESLintを使うように設定
+  (flycheck-add-mode 'javascript-eslint 'js-mode)
+  (flycheck-add-mode 'javascript-eslint 'js2-mode)
+  (flycheck-add-mode 'javascript-eslint 'rjsx-mode)
+  (flycheck-add-mode 'javascript-eslint 'typescript-mode)
+  (flycheck-add-mode 'javascript-eslint 'web-mode)
+
+  ;; NodeModuleのESLintを使うように設定
+  (defun my/find-npm-command (command)
+    (let* ((dirname "node_modules")
+           (root (locate-dominating-file default-directory dirname)))
+      (if root (concat
+                (file-name-as-directory root)
+                (file-name-as-directory dirname)
+                (file-name-as-directory ".bin")
+                command))))
+  (defun my/executable-find (command)
+    (let* ((file-path (my/find-npm-command command)))
+      (if (and file-path (file-executable-p file-path))
+          file-path (executable-find command))))
+  (setq flycheck-executable-find #'my/executable-find)
+
+  ;; エラー行のハイライト
+  (custom-set-faces
+   '(flycheck-error
+     ((t (:background "#FFCCCC" :foreground "#990000" :underline t :bold t))))
+   '(flycheck-warning
+     ((t (:background "#FFFFCC" :foreground "#996600" :underline t :bold t))))
+   '(flycheck-info
+     ((t (:background "#CCFFCC" :foreground "#006600" :underline t :bold t)))))
+  )
 
 ;; OpenAI ChatGPT
 (use-package openai
@@ -265,6 +305,50 @@
 (use-package magit
   :ensure t
   :bind ("C-x g" . magit-status))
+
+
+;;--------------------------------------------------------------------------
+;; Proguraming: TypeScript
+;;--------------------------------------------------------------------------
+;; JavaScript/JSX editing
+(use-package js
+  :mode ("\\.js\\'" "\\.jsx\\'")  ;; 自動的に js-mode を使うファイル拡張子を指定
+  :hook (js-mode . lsp-deferred)  ;; js-mode の時に LSP サーバーを遅延起動
+  :init
+  (setq js-indent-level 2))       ;; JavaScript のインデントレベルを2に設定
+
+(use-package rjsx-mode
+  :ensure t
+  :mode ("\\.js\\'" "\\.jsx\\'")  ;; 自動的に js-mode を使うファイル拡張子を指定
+  :config
+  (setq js2-basic-offset 2)
+  (add-hook 'rjsx-mode-hook 'lsp-deferred))
+
+;; TypeScript support
+(use-package typescript-mode
+  :ensure t
+  :mode ("\\.ts\\'" "\\.tsx\\'")
+  :hook (typescript-mode . lsp-deferred)
+  :config
+  (setq typescript-indent-level 2))
+
+;; Web development
+(use-package web-mode
+  :ensure t
+  :mode ("\\.html?\\'" "\\.css\\'" "\\.php\\'" "\\.erb\\'" "\\.vue\\'")
+  :config
+  (setq web-mode-markup-indent-offset 2)  ;; HTMLのインデント設定
+  (setq web-mode-css-indent-offset 2)     ;; CSSのインデント設定
+  (setq web-mode-code-indent-offset 2)    ;; JSやPHPなどコード部分のインデント設定
+  (setq web-mode-enable-auto-closing t)   ;; タグの自動閉じを有効化
+  (setq web-mode-enable-auto-quoting t)   ;; 属性の自動クォートを有効化
+
+  ;; PHPのみインデントを4スペースに設定
+  (setq web-mode-script-padding 4)
+  (add-hook 'web-mode-hook
+            (lambda ()
+              (when (string-equal "php" (file-name-extension buffer-file-name))
+                (setq web-mode-code-indent-offset 4)))))
 
 ;; init.elの終端
 (provide 'init)

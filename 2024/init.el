@@ -223,29 +223,24 @@
 (use-package lsp-mode
   :ensure t
   :commands (lsp lsp-deferred)
-  :hook (prog-mode . lsp-deferred)
+  :hook
+  (scala-mode . lsp)
+  (lsp-mode . lsp-lens-mode)
+  (prog-mode . lsp-deferred)
   :config
   (setq lsp-idle-delay 0.5)                    ;; アイドル状態0.5秒後にLSPがトリガー
   (setq lsp-headerline-breadcrumb-enable nil)  ;; パンクズ表示を無効化
-  (setq lsp-diagnostics-provider :none)        ;; デフォルトの設定を無効化
+  (setq lsp-diagnostics-provider :flycheck)
   (setq lsp-prefer-flymake nil)                ;; Flycheck を使用するために Flymake を無効化
+  (setq lsp-keep-workspace-alive nil)          ;; ワークスペースを維持しない
   )
-
-(use-package lsp-ui
-  :ensure t
-  :commands lsp-ui-mode
-  :hook (lsp-mode . lsp-ui-mode)
-  :custom
-  (lsp-ui-sideline-enable nil)
-  (lsp-ui-doc-enable nil)
-  (lsp-ui-flycheck-enable t))  ; lsp-ui-flycheck を有効化
 
 (use-package flycheck
   :ensure t
   :init (global-flycheck-mode)
   :config
   ;; FlyCheckの更新頻度を調整
-  (setq flycheck-check-syntax-automatically '(save mode-enabled idle-change))
+  ;; (setq flycheck-check-syntax-automatically '(save mode-enabled idle-change))
   (setq flycheck-idle-change-delay 0.5)  ;; テキスト変更後0.5秒でチェックを開始
 
   ;; FlyCheckがESLintを使うように設定
@@ -254,21 +249,6 @@
   (flycheck-add-mode 'javascript-eslint 'rjsx-mode)
   (flycheck-add-mode 'javascript-eslint 'typescript-mode)
   (flycheck-add-mode 'javascript-eslint 'web-mode)
-
-  ;; NodeModuleのESLintを使うように設定
-  (defun my/find-npm-command (command)
-    (let* ((dirname "node_modules")
-           (root (locate-dominating-file default-directory dirname)))
-      (if root (concat
-                (file-name-as-directory root)
-                (file-name-as-directory dirname)
-                (file-name-as-directory ".bin")
-                command))))
-  (defun my/executable-find (command)
-    (let* ((file-path (my/find-npm-command command)))
-      (if (and file-path (file-executable-p file-path))
-          file-path (executable-find command))))
-  (setq flycheck-executable-find #'my/executable-find)
 
   ;; エラー行のハイライト
   (custom-set-faces
@@ -279,6 +259,17 @@
    '(flycheck-info
      ((t (:background "#CCFFCC" :foreground "#006600" :underline t :bold t)))))
   )
+
+(use-package lsp-ui
+  :ensure t
+  :commands lsp-ui-mode
+  :hook (lsp-mode . lsp-ui-mode)
+  :custom
+  (setq lsp-ui-doc-enable nil)
+  (setq lsp-ui-sideline-enable t)
+  (setq lsp-ui-sideline-show-diagnostics t)
+  (setq lsp-ui-flycheck-enable t))
+
 
 ;; OpenAI ChatGPT
 (use-package openai
@@ -306,9 +297,8 @@
   :ensure t
   :bind ("C-x g" . magit-status))
 
-
 ;;--------------------------------------------------------------------------
-;; Proguraming: TypeScript
+;; Proguraming: Web (html, css, js, etc...)
 ;;--------------------------------------------------------------------------
 ;; JavaScript/JSX editing
 (use-package js
@@ -335,7 +325,7 @@
 ;; Web development
 (use-package web-mode
   :ensure t
-  :mode ("\\.html?\\'" "\\.css\\'" "\\.php\\'" "\\.erb\\'" "\\.vue\\'")
+  :mode ("\\.html?\\'" "\\.css\\'" "\\.php\\'" "\\.erb\\'" "\\.vue\\'"  "\\.tsx\\'")
   :config
   (setq web-mode-markup-indent-offset 2)  ;; HTMLのインデント設定
   (setq web-mode-css-indent-offset 2)     ;; CSSのインデント設定
@@ -348,7 +338,66 @@
   (add-hook 'web-mode-hook
             (lambda ()
               (when (string-equal "php" (file-name-extension buffer-file-name))
-                (setq web-mode-code-indent-offset 4)))))
+                (setq web-mode-code-indent-offset 4))))
+
+
+  ;; NodeModuleのESLintを使うように設定
+  (defun my/find-npm-command (command)
+    (let* ((dirname "node_modules")
+           (root (locate-dominating-file default-directory dirname)))
+      (if root (concat
+                (file-name-as-directory root)
+                (file-name-as-directory dirname)
+                (file-name-as-directory ".bin")
+                command))))
+  (defun my/executable-find (command)
+    (let* ((file-path (my/find-npm-command command)))
+      (if (and file-path (file-executable-p file-path))
+          file-path (executable-find command))))
+
+  (defun my-web-mode-flycheck-setup ()
+    "Custom Flycheck setup for web-mode."
+    (setq-local flycheck-executable-find #'my/executable-find))
+
+  (add-hook 'web-mode-hook #'my-web-mode-flycheck-setup)
+  )
+
+
+;;--------------------------------------------------------------------------
+;; Proguraming: Scala
+;;--------------------------------------------------------------------------
+;; Install and configure lsp-metals
+(use-package lsp-metals
+  :config
+  (setq lsp-metals-coursier-bootstrap-server t)
+  )
+
+;; Install and configure scala-mode
+(use-package scala-mode
+  :ensure t
+  :mode "\\.s\\(cala\\|bt\\)$"
+  :hook (scala-mode . lsp-deferred)
+  :config
+  (setq scala-indent:use-javadoc-style t))
+
+;; Install and configure sbt-mode
+(use-package sbt-mode
+  :ensure t
+  :commands sbt-start sbt-command
+  :config
+  (setq sbt:program-options '("-Dsbt.supershell=false"))
+  ;; SBT popup windows configuration
+  (setq sbt:display-command-buffer nil))
+
+
+(setq scala-bootstrap:metals-scala-version "2.13")
+(setq scala-bootstrap:metals-version nil) ;; force latest metals version (nil corresponds for latest)
+(add-hook 'scala-mode-hook
+          '(lambda ()
+              (scala-bootstrap:with-metals-installed
+               (scala-bootstrap:with-bloop-server-started
+                (lsp)
+                ))))
 
 ;; init.elの終端
 (provide 'init)

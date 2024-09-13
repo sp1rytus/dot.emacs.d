@@ -49,11 +49,9 @@
 (setq make-backup-files t)
 
 ;; バックアップファイルと自動保存ファイルのディレクトリを指定
-(setq backup-directory-alist
-      '(("." . "~/.emacs.d/backup/")))
-
-(setq auto-save-file-name-transforms
-      '((".*" "~/.emacs.d/backup/" t)))
+(setq auto-save-default nil)
+(setq backup-directory-alist '(("." . "~/.emacs.d/backup/")))
+(setq auto-save-file-name-transforms '((".*" "~/.emacs.d/backup/" t)))
 
 ;; バックアップと自動保存に関するその他の設定
 (setq backup-by-copying t)      ;; 元のファイルを変更せずにコピーでバックアップ
@@ -95,6 +93,9 @@
 
 ;; カーソルの位置が何行目かを表示する
 (line-number-mode t)
+
+;; グローバルに行番号を表示する
+(global-display-line-numbers-mode t)
 
 ;; 対応する括弧をハイライト
 (setq show-paren-delay 0)
@@ -157,8 +158,7 @@
 ;; Key binding
 ;;--------------------------------------------------------------------------
 (global-set-key (kbd "<tab>") 'indent-for-tab-command)
-(global-set-key (kbd "<f7>") 'enlarge-window-horizontally)
-(global-set-key (kbd "<f8>") 'enlarge-window)
+(global-set-key (kbd "<f8>") 'my-openai-menu)
 (global-set-key (kbd "<f11>") 'ibuffer)
 (global-set-key (kbd "<f12>") 'undo)
 (global-set-key (kbd "M-z") 'lsp)
@@ -217,22 +217,25 @@
               ("C-n" . 'copilot-next-completion)
               ("C-p" . 'copilot-previous-completion))
   :config
+  (add-to-list 'copilot-indentation-alist '(prog-mode 2))
+  (add-to-list 'copilot-indentation-alist '(org-mode 2))
+  (add-to-list 'copilot-indentation-alist '(text-mode 2))
+  (add-to-list 'copilot-indentation-alist '(closure-mode 2))
   (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2)))
 
 ;; LSP
 (use-package lsp-mode
-  :ensure t
-  :commands (lsp lsp-deferred)
   :hook
-  (scala-mode . lsp)
   (lsp-mode . lsp-lens-mode)
-  (prog-mode . lsp-deferred)
+  (php-mode . lsp-deferred)
+  (scala-ts-mode . lsp)
   :config
-  (setq lsp-idle-delay 0.5)                    ;; アイドル状態0.5秒後にLSPがトリガー
-  (setq lsp-headerline-breadcrumb-enable nil)  ;; パンクズ表示を無効化
-  (setq lsp-diagnostics-provider :flycheck)
   (setq lsp-prefer-flymake nil)                ;; Flycheck を使用するために Flymake を無効化
   (setq lsp-keep-workspace-alive nil)          ;; ワークスペースを維持しない
+  (setq read-process-output-max (* 1024 1024)) ;; LSPの出力を増やす
+  (setq lsp-idle-delay 0.5)                    ;; アイドル状態0.5秒後にLSPがトリガー
+  (setq lsp-headerline-breadcrumb-enable nil)  ;; パンクズ表示を無効化
+  (setq lsp-clients-php-server-command '("intelephense" "--stdio")) ;; PHP設定
   )
 
 (use-package flycheck
@@ -264,11 +267,10 @@
   :ensure t
   :commands lsp-ui-mode
   :hook (lsp-mode . lsp-ui-mode)
-  :custom
-  (setq lsp-ui-doc-enable nil)
-  (setq lsp-ui-sideline-enable t)
-  (setq lsp-ui-sideline-show-diagnostics t)
-  (setq lsp-ui-flycheck-enable t))
+  :init
+  (setq lsp-ui-flycheck-enable t)
+  (setq lsp-ui-flycheck-live-reporting t)
+)
 
 
 ;; OpenAI ChatGPT
@@ -279,12 +281,12 @@
   (setq openai-key (getenv "OPENAI_API_KEY"))
 
   ;; 選択範囲を質問としてChatGPTに送り、回答を挿入する関数
-  (defun ask-chatgpt-and-insert-response (start end)
+  (defun ask-chatgpt-and-insert-response (prompt)
     "Send the selected region as a prompt to ChatGPT and insert the response."
     (interactive "r")
-    (let ((selected-text (buffer-substring-no-properties start end)))
+    (let ((text-buffer (concat (buffer-substring (region-beginning) (region-end)) "\n" prompt)))
       (openai-completion
-       selected-text
+       text-buffer
        (lambda (response)
          (insert (cdr (assq 'text (aref (cdr (assq 'choices response)) 0)))))
        :model "gpt-3.5-turbo-instruct"
@@ -296,6 +298,27 @@
 (use-package magit
   :ensure t
   :bind ("C-x g" . magit-status))
+
+
+;;--------------------------------------------------------------------------
+;; Custom Menu
+;;--------------------------------------------------------------------------
+(use-package transient
+  :ensure t
+  :config
+  (transient-define-prefix my-openai-menu ()
+    "My custom menu."
+    [
+     ["Transalate"
+      ("<f12>" "English"  (lambda () (interactive) (ask-chatgpt-and-insert-response "上の文章を英語に翻訳してください")))
+      ("<f10>" "Japanese" (lambda () (interactive) (ask-chatgpt-and-insert-response "上の文章を日本語に翻訳してください")))
+      ]
+     ["Doc"
+      ("<f11>" "English"  (lambda () (interactive) (ask-chatgpt-and-insert-response "上のコードを機能概要を言語に合わせたdocblock形式で、簡単にサマライズして英語で提案してください")))
+      ("<f9>"  "Japanese" (lambda () (interactive) (ask-chatgpt-and-insert-response "上のコードを機能概要を言語に合わせたdocblock形式で、簡単にサマライズして日本語で提案してください")))
+      ]]
+    )
+  )
 
 ;;--------------------------------------------------------------------------
 ;; Proguraming: Web (html, css, js, etc...)
@@ -362,6 +385,13 @@
   (add-hook 'web-mode-hook #'my-web-mode-flycheck-setup)
   )
 
+;;--------------------------------------------------------------------------
+;; Proguraming: PHP
+;;--------------------------------------------------------------------------
+(use-package php-mode
+  :ensure t
+  :mode ("\\.php\\'" . php-mode)
+  :hook (php-mode . lsp))
 
 ;;--------------------------------------------------------------------------
 ;; Proguraming: Scala
@@ -369,8 +399,11 @@
 ;; Install and configure lsp-metals
 (use-package lsp-metals
   :config
+  (setq lsp-semantic-tokens-enable t)
   (setq lsp-metals-coursier-bootstrap-server t)
   )
+
+(setq lsp-diagnostics-provider :flycheck)
 
 ;; Install and configure scala-mode
 (use-package scala-mode
@@ -379,6 +412,8 @@
   :hook (scala-mode . lsp-deferred)
   :config
   (setq scala-indent:use-javadoc-style t))
+
+(straight-use-package 'scala-ts-mode)
 
 ;; Install and configure sbt-mode
 (use-package sbt-mode
@@ -389,16 +424,21 @@
   ;; SBT popup windows configuration
   (setq sbt:display-command-buffer nil))
 
+(use-package company
+  :hook (scala-mode . company-mode)
+  :config
+  (setq lsp-completion-provider :capf))
 
-(setq scala-bootstrap:metals-scala-version "2.13")
-(setq scala-bootstrap:metals-version nil) ;; force latest metals version (nil corresponds for latest)
-(add-hook 'scala-mode-hook
-          '(lambda ()
-              (scala-bootstrap:with-metals-installed
-               (scala-bootstrap:with-bloop-server-started
-                (lsp)
-                ))))
+(use-package eglot
+  :pin melpa-stable
+  ;; (optional) Automatically start metals for Scala files.
+  :hook (scala-mode . eglot-ensure))
 
+(use-package yaml-mode
+  :ensure t
+  :mode ("\\.yml\\'" . yaml-mode)
+  :hook (yaml-mode . (lambda ()
+                       (define-key yaml-mode-map "\C-m" 'newline-and-indent))))
 ;; init.elの終端
 (provide 'init)
 

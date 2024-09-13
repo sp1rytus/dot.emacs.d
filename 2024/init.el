@@ -128,6 +128,12 @@
 ;; dired でディレクトリを先に表示する
 (setq dired-listing-switches "-al --group-directories-first")
 
+;; GUI利用時のシェルの環境変数対応
+(use-package exec-path-from-shell
+  :ensure t
+  :config
+  (exec-path-from-shell-initialize))
+
 ;; コマンドサポート
 (use-package which-key
   :ensure t
@@ -157,7 +163,6 @@
 ;;--------------------------------------------------------------------------
 ;; Key binding
 ;;--------------------------------------------------------------------------
-(global-set-key (kbd "<tab>") 'indent-for-tab-command)
 (global-set-key (kbd "<f8>") 'my-openai-menu)
 (global-set-key (kbd "<f11>") 'ibuffer)
 (global-set-key (kbd "<f12>") 'undo)

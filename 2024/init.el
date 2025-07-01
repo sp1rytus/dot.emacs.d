@@ -163,7 +163,9 @@
 ;;--------------------------------------------------------------------------
 ;; Key binding
 ;;--------------------------------------------------------------------------
-(global-set-key (kbd "<f8>") 'my-openai-menu)
+(global-set-key (kbd "<f7>") 'enlarge-window-horizontally)
+(global-set-key (kbd "<f8>") 'enlarge-window)
+(global-set-key (kbd "<f10>") 'my-openai-menu)
 (global-set-key (kbd "<f11>") 'ibuffer)
 (global-set-key (kbd "<f12>") 'undo)
 (global-set-key (kbd "M-z") 'lsp)
@@ -222,6 +224,7 @@
               ("C-n" . 'copilot-next-completion)
               ("C-p" . 'copilot-previous-completion))
   :config
+  (setq copilot-idle-delay 1) ;; 補完トリガーを遅らせる
   (add-to-list 'copilot-indentation-alist '(prog-mode 2))
   (add-to-list 'copilot-indentation-alist '(org-mode 2))
   (add-to-list 'copilot-indentation-alist '(text-mode 2))
@@ -238,8 +241,11 @@
   (setq lsp-prefer-flymake nil)                ;; Flycheck を使用するために Flymake を無効化
   (setq lsp-keep-workspace-alive nil)          ;; ワークスペースを維持しない
   (setq read-process-output-max (* 1024 1024)) ;; LSPの出力を増やす
-  (setq lsp-idle-delay 0.5)                    ;; アイドル状態0.5秒後にLSPがトリガー
+  (setq lsp-idle-delay 1)                      ;; アイドル状態0.5秒後にLSPがトリガー
+  (setq lsp-enable-file-watchers nil)          ;; ファイルウォッチャーを無効化
+  (setq lsp-auto-guess-root nil)               ;; 自動で親のプロジェクトを探さない
   (setq lsp-headerline-breadcrumb-enable nil)  ;; パンクズ表示を無効化
+  (setq lsp-use-plists nil)
   (setq lsp-clients-php-server-command '("intelephense" "--stdio")) ;; PHP設定
   )
 
@@ -350,6 +356,14 @@
   :config
   (setq typescript-indent-level 2))
 
+;; Svelte support
+(use-package svelte-mode
+  :ensure t
+  :mode "\\.svelte\\'"
+  :hook (svelte-mode . lsp-deferred)
+  :config
+  (setq typescript-indent-level 2))
+
 ;; Web development
 (use-package web-mode
   :ensure t
@@ -411,14 +425,28 @@
 (setq lsp-diagnostics-provider :flycheck)
 
 ;; Install and configure scala-mode
-(use-package scala-mode
-  :ensure t
-  :mode "\\.s\\(cala\\|bt\\)$"
-  :hook (scala-mode . lsp-deferred)
-  :config
-  (setq scala-indent:use-javadoc-style t))
+;; (use-package scala-mode
+;;   :ensure t
+;;   :mode "\\.s\\(cala\\|bt\\)$"
+;;   :hook (scala-mode . lsp-deferred)
+;;   :config
+;;   (setq scala-indent:use-javadoc-style t))
 
 (straight-use-package 'scala-ts-mode)
+(setq treesit-font-lock-level 4)
+(with-eval-after-load 'scala-ts-mode
+  (let ((offset scala-ts-indent-offset))
+    (let ((existing (alist-get 'scala scala-ts--indent-rules)))
+      (setq scala-ts--indent-rules
+            `((scala
+               ;; 元のルールを残して
+               ,@(cl-remove-if
+                  (lambda (rule)
+                    (equal (car rule) '(parent-is "^tuple_expression$")))
+                  existing)
+               ;; tuple_expression の新しいルールを追加
+               ((parent-is "^tuple_expression$") parent-bol ,offset)
+               ))))))
 
 ;; Install and configure sbt-mode
 (use-package sbt-mode
@@ -444,6 +472,12 @@
   :mode ("\\.yml\\'" . yaml-mode)
   :hook (yaml-mode . (lambda ()
                        (define-key yaml-mode-map "\C-m" 'newline-and-indent))))
+
+(use-package terraform-mode
+  :ensure t
+  :mode ("\\.tf\\'" . terraform-mode)
+  :hook (terraform-mode . terraform-format-on-save-mode))
+
 ;; init.elの終端
 (provide 'init)
 
